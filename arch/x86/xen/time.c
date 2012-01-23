@@ -71,14 +71,14 @@ static u64 get64(const u64 *p)
 /*
  * Runstate accounting
  */
-static void get_runstate_snapshot(struct vcpu_runstate_info *res)
+static void get_runstate_snapshot(struct vcpu_runstate_info *res, int cpu)
 {
 	u64 state_time;
 	struct vcpu_runstate_info *state;
 
 	BUG_ON(preemptible());
 
-	state = &__get_cpu_var(xen_runstate);
+	state = &per_cpu(xen_runstate, cpu);
 
 	/*
 	 * The runstate info is always updated by the hypervisor on
@@ -110,18 +110,18 @@ void xen_setup_runstate_info(int cpu)
 		BUG();
 }
 
-static void do_stolen_accounting(void)
+static u64 xen_steal_clock(int cpu)
 {
 	struct vcpu_runstate_info state;
 	struct vcpu_runstate_info *snap;
 	s64 runnable, offline, stolen;
-	cputime_t ticks;
+	u64 ticks;
 
-	get_runstate_snapshot(&state);
+	get_runstate_snapshot(&state, cpu);
 
 	WARN_ON(state.state != RUNSTATE_running);
 
-	snap = &__get_cpu_var(xen_runstate_snapshot);
+	snap = &per_cpu(xen_runstate_snapshot, cpu);
 
 	/* work out how much time the VCPU has not been runn*ing*  */
 	runnable = state.time[RUNSTATE_runnable] - snap->time[RUNSTATE_runnable];
@@ -138,7 +138,8 @@ static void do_stolen_accounting(void)
 
 	ticks = iter_div_u64_rem(stolen, NS_PER_TICK, &stolen);
 	__this_cpu_write(xen_residual_stolen, stolen);
-	account_steal_ticks(ticks);
+
+	return ticks;
 }
 
 /* Get the TSC speed from Xen */
@@ -377,8 +378,6 @@ static irqreturn_t xen_timer_interrupt(int irq, void *dev_id)
 		ret = IRQ_HANDLED;
 	}
 
-	do_stolen_accounting();
-
 	return ret;
 }
 
@@ -439,6 +438,7 @@ void xen_timer_resume(void)
 
 static const struct pv_time_ops xen_time_ops __initconst = {
 	.sched_clock = xen_clocksource_read,
+	.steal_clock = xen_steal_clock,
 };
 
 static void __init xen_time_init(void)
@@ -464,6 +464,9 @@ static void __init xen_time_init(void)
 	xen_setup_runstate_info(cpu);
 	xen_setup_timer(cpu);
 	xen_setup_cpu_clockevents();
+
+	jump_label_inc(&paravirt_steal_enabled);
+	jump_label_inc(&paravirt_steal_rq_enabled);
 }
 
 void __init xen_init_time_ops(void)
