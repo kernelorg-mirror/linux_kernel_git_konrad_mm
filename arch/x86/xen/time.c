@@ -465,8 +465,8 @@ static void __init xen_time_init(void)
 	xen_setup_timer(cpu);
 	xen_setup_cpu_clockevents();
 
-	jump_label_inc(&paravirt_steal_enabled);
-	jump_label_inc(&paravirt_steal_rq_enabled);
+	static_key_slow_inc(&paravirt_steal_enabled);
+	static_key_slow_inc(&paravirt_steal_rq_enabled);
 }
 
 void __init xen_init_time_ops(void)
