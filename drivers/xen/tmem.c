@@ -268,8 +268,8 @@ static inline struct tmem_oid oswiz(unsigned type, u32 ind)
 	return oid;
 }
 
-/* returns 0 if the page was successfully put into frontswap, -1 if not */
-static int tmem_frontswap_put_page(unsigned type, pgoff_t offset,
+/* returns true if the page was successfully put into frontswap, false if not */
+static bool tmem_frontswap_put_page(unsigned type, pgoff_t offset,
 				   struct page *page)
 {
 	u64 ind64 = (u64)offset;
@@ -279,23 +279,20 @@ static int tmem_frontswap_put_page(unsigned type, pgoff_t offset,
 	int ret;
 
 	if (pool < 0)
-		return -1;
+		return false;
 	if (ind64 != ind)
-		return -1;
+		return false;
 	mb(); /* ensure page is quiescent; tmem may address it with an alias */
 	ret = xen_tmem_put_page(pool, oswiz(type, ind), iswiz(ind), pfn);
 	/* translate Xen tmem return values to linux semantics */
-	if (ret == 1)
-		return 0;
-	else
-		return -1;
+	return ret == 1 ? true : false;
 }
 
 /*
  * returns 0 if the page was successfully gotten from frontswap, -1 if
  * was not present (should never happen!)
  */
-static int tmem_frontswap_get_page(unsigned type, pgoff_t offset,
+static bool tmem_frontswap_get_page(unsigned type, pgoff_t offset,
 				   struct page *page)
 {
 	u64 ind64 = (u64)offset;
@@ -305,15 +302,12 @@ static int tmem_frontswap_get_page(unsigned type, pgoff_t offset,
 	int ret;
 
 	if (pool < 0)
-		return -1;
+		return false;
 	if (ind64 != ind)
-		return -1;
+		return false;
 	ret = xen_tmem_get_page(pool, oswiz(type, ind), iswiz(ind), pfn);
 	/* translate Xen tmem return values to linux semantics */
-	if (ret == 1)
-		return 0;
-	else
-		return -1;
+	return ret == 1 ? true : false;
 }
 
 /* flush a single page from frontswap */
