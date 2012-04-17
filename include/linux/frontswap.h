@@ -13,7 +13,7 @@ struct frontswap_ops {
 	void (*invalidate_area)(unsigned);
 };
 
-extern int frontswap_enabled;
+extern bool frontswap_enabled;
 extern struct frontswap_ops
 	frontswap_register_ops(struct frontswap_ops *ops);
 extern void frontswap_shrink(unsigned long);
@@ -28,9 +28,9 @@ extern void __frontswap_invalidate_area(unsigned);
 
 #ifdef CONFIG_FRONTSWAP
 
-static inline int frontswap_test(struct swap_info_struct *sis, pgoff_t offset)
+static inline bool frontswap_test(struct swap_info_struct *sis, pgoff_t offset)
 {
-	int ret = 0;
+	bool ret = false;
 
 	if (frontswap_enabled && sis->frontswap_map)
 		ret = test_bit(offset, sis->frontswap_map);
@@ -64,9 +64,9 @@ static inline unsigned long *frontswap_map_get(struct swap_info_struct *p)
 
 #define frontswap_enabled (0)
 
-static inline int frontswap_test(struct swap_info_struct *sis, pgoff_t offset)
+static inline bool frontswap_test(struct swap_info_struct *sis, pgoff_t offset)
 {
-	return 0;
+	return false;
 }
 
 static inline void frontswap_set(struct swap_info_struct *sis, pgoff_t offset)

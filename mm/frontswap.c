@@ -35,7 +35,7 @@ static struct frontswap_ops frontswap_ops __read_mostly;
  * has not been registered, so is preferred to the slower alternative: a
  * function call that checks a non-global.
  */
-int frontswap_enabled __read_mostly;
+bool frontswap_enabled __read_mostly;
 EXPORT_SYMBOL(frontswap_enabled);
 
 /*
@@ -50,7 +50,7 @@ static bool frontswap_writethrough_enabled __read_mostly;
 
 /*
  * Counters available via /sys/kernel/debug/frontswap (if debugfs is
- * properly configured.  These are for information only so are not protected
+ * properly configured).  These are for information only so are not protected
  * against increment races.
  */
 static u64 frontswap_gets;
@@ -60,20 +60,20 @@ static u64 frontswap_invalidates;
 
 /*
  * Register operations for frontswap, returning previous thus allowing
- * detection of multiple backends and possible nesting
+ * detection of multiple backends and possible nesting.
  */
 struct frontswap_ops frontswap_register_ops(struct frontswap_ops *ops)
 {
 	struct frontswap_ops old = frontswap_ops;
 
 	frontswap_ops = *ops;
-	frontswap_enabled = 1;
+	frontswap_enabled = true;
 	return old;
 }
 EXPORT_SYMBOL(frontswap_register_ops);
 
 /*
- * Enable/disable frontswap writethrough (see above)
+ * Enable/disable frontswap writethrough (see above).
  */
 void frontswap_writethrough(bool enable)
 {
@@ -81,7 +81,9 @@ void frontswap_writethrough(bool enable)
 }
 EXPORT_SYMBOL(frontswap_writethrough);
 
-/* Called when a swap device is swapon'd */
+/*
+ * Called when a swap device is swapon'd.
+ */
 void __frontswap_init(unsigned type)
 {
 	struct swap_info_struct *sis = swap_info[type];
@@ -99,7 +101,7 @@ EXPORT_SYMBOL(__frontswap_init);
  * swaptype and offset.  Page must be locked and in the swap cache.
  * If frontswap already contains a page with matching swaptype and
  * offset, the frontswap implmentation may either overwrite the data and
- * return success or invalidate the page from frontswap and return failure
+ * return success or invalidate the page from frontswap and return failure.
  */
 int __frontswap_put_page(struct page *page)
 {
@@ -139,7 +141,7 @@ EXPORT_SYMBOL(__frontswap_put_page);
 /*
  * "Get" data from frontswap associated with swaptype and offset that were
  * specified when the data was put to frontswap and use it to fill the
- * specified page with data. Page must be locked and in the swap cache
+ * specified page with data. Page must be locked and in the swap cache.
  */
 int __frontswap_get_page(struct page *page)
 {
@@ -276,8 +278,6 @@ EXPORT_SYMBOL(frontswap_curr_pages);
 
 static int __init init_frontswap(void)
 {
-	int err = 0;
-
 #ifdef CONFIG_DEBUG_FS
 	struct dentry *root = debugfs_create_dir("frontswap", NULL);
 	if (root == NULL)
@@ -289,7 +289,7 @@ static int __init init_frontswap(void)
 	debugfs_create_u64("invalidates", S_IRUGO,
 				root, &frontswap_invalidates);
 #endif
-	return err;
+	return 0;
 }
 
 module_init(init_frontswap);
