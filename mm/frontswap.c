@@ -48,6 +48,7 @@ EXPORT_SYMBOL(frontswap_enabled);
  */
 static bool frontswap_writethrough_enabled __read_mostly;
 
+#ifdef CONFIG_DEBUG_FS
 /*
  * Counters available via /sys/kernel/debug/frontswap (if debugfs is
  * properly configured).  These are for information only so are not protected
@@ -58,6 +59,24 @@ static u64 frontswap_succ_puts;
 static u64 frontswap_failed_puts;
 static u64 frontswap_invalidates;
 
+static inline void inc_frontswap_gets(void) {
+	frontswap_gets++;
+}
+static inline void inc_frontswap_succ_puts(void) {
+	frontswap_succ_puts++;
+}
+static inline void inc_frontswap_failed_puts(void) {
+	frontswap_failed_puts++;
+}
+static inline void inc_frontswap_invalidates(void) {
+	frontswap_invalidates++;
+}
+#else
+static inline void inc_frontswap_gets(void) { }
+static inline void inc_frontswap_succ_puts(void) { }
+static inline void inc_frontswap_failed_puts(void) { }
+static inline void inc_frontswap_invalidates(void) { }
+#endif
 /*
  * Register operations for frontswap, returning previous thus allowing
  * detection of multiple backends and possible nesting.
@@ -118,7 +137,7 @@ int __frontswap_put_page(struct page *page)
 	ret = (*frontswap_ops.put_page)(type, offset, page);
 	if (ret == 0) {
 		frontswap_set(sis, offset);
-		frontswap_succ_puts++;
+		inc_frontswap_succ_puts();
 		if (!dup)
 			atomic_inc(&sis->frontswap_pages);
 	} else if (dup) {
@@ -128,9 +147,9 @@ int __frontswap_put_page(struct page *page)
 		 */
 		frontswap_clear(sis, offset);
 		atomic_dec(&sis->frontswap_pages);
-		frontswap_failed_puts++;
+		inc_frontswap_failed_puts();
 	} else
-		frontswap_failed_puts++;
+		inc_frontswap_failed_puts();
 	if (frontswap_writethrough_enabled)
 		/* report failure so swap also writes to swap device */
 		ret = -1;
@@ -156,7 +175,7 @@ int __frontswap_get_page(struct page *page)
 	if (frontswap_test(sis, offset))
 		ret = (*frontswap_ops.get_page)(type, offset, page);
 	if (ret == 0)
-		frontswap_gets++;
+		inc_frontswap_gets();
 	return ret;
 }
 EXPORT_SYMBOL(__frontswap_get_page);
@@ -174,7 +193,7 @@ void __frontswap_invalidate_page(unsigned type, pgoff_t offset)
 		(*frontswap_ops.invalidate_page)(type, offset);
 		atomic_dec(&sis->frontswap_pages);
 		frontswap_clear(sis, offset);
-		frontswap_invalidates++;
+		inc_frontswap_invalidates();
 	}
 }
 EXPORT_SYMBOL(__frontswap_invalidate_page);
