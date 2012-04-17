@@ -7,8 +7,8 @@
 
 struct frontswap_ops {
 	void (*init)(unsigned);
-	int (*put_page)(unsigned, pgoff_t, struct page *);
-	int (*get_page)(unsigned, pgoff_t, struct page *);
+	bool (*put_page)(unsigned, pgoff_t, struct page *);
+	bool (*get_page)(unsigned, pgoff_t, struct page *);
 	void (*invalidate_page)(unsigned, pgoff_t);
 	void (*invalidate_area)(unsigned);
 };
@@ -21,8 +21,8 @@ extern unsigned long frontswap_curr_pages(void);
 extern void frontswap_writethrough(bool);
 
 extern void __frontswap_init(unsigned type);
-extern int __frontswap_put_page(struct page *page);
-extern int __frontswap_get_page(struct page *page);
+extern bool __frontswap_put_page(struct page *page);
+extern bool __frontswap_get_page(struct page *page);
 extern void __frontswap_invalidate_page(unsigned, pgoff_t);
 extern void __frontswap_invalidate_area(unsigned);
 
@@ -88,22 +88,18 @@ static inline unsigned long *frontswap_map_get(struct swap_info_struct *p)
 }
 #endif
 
-static inline int frontswap_put_page(struct page *page)
+static inline bool frontswap_put_page(struct page *page)
 {
-	int ret = -1;
-
 	if (frontswap_enabled)
-		ret = __frontswap_put_page(page);
-	return ret;
+		return __frontswap_put_page(page);
+	return false;
 }
 
-static inline int frontswap_get_page(struct page *page)
+static inline bool frontswap_get_page(struct page *page)
 {
-	int ret = -1;
-
 	if (frontswap_enabled)
-		ret = __frontswap_get_page(page);
-	return ret;
+		return __frontswap_get_page(page);
+	return false;
 }
 
 static inline void frontswap_invalidate_page(unsigned type, pgoff_t offset)

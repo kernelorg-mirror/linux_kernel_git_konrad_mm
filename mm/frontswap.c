@@ -122,9 +122,10 @@ EXPORT_SYMBOL(__frontswap_init);
  * offset, the frontswap implmentation may either overwrite the data and
  * return success or invalidate the page from frontswap and return failure.
  */
-int __frontswap_put_page(struct page *page)
+bool __frontswap_put_page(struct page *page)
 {
-	int ret = -1, dup = 0;
+	bool dup = false;
+	bool ret;
 	swp_entry_t entry = { .val = page_private(page), };
 	int type = swp_type(entry);
 	struct swap_info_struct *sis = swap_info[type];
@@ -133,9 +134,9 @@ int __frontswap_put_page(struct page *page)
 	BUG_ON(!PageLocked(page));
 	BUG_ON(sis == NULL);
 	if (frontswap_test(sis, offset))
-		dup = 1;
+		dup = true;
 	ret = (*frontswap_ops.put_page)(type, offset, page);
-	if (ret == 0) {
+	if (ret) {
 		frontswap_set(sis, offset);
 		inc_frontswap_succ_puts();
 		if (!dup)
@@ -152,7 +153,7 @@ int __frontswap_put_page(struct page *page)
 		inc_frontswap_failed_puts();
 	if (frontswap_writethrough_enabled)
 		/* report failure so swap also writes to swap device */
-		ret = -1;
+		return false;
 	return ret;
 }
 EXPORT_SYMBOL(__frontswap_put_page);
@@ -162,9 +163,8 @@ EXPORT_SYMBOL(__frontswap_put_page);
  * specified when the data was put to frontswap and use it to fill the
  * specified page with data. Page must be locked and in the swap cache.
  */
-int __frontswap_get_page(struct page *page)
+bool __frontswap_get_page(struct page *page)
 {
-	int ret = -1;
 	swp_entry_t entry = { .val = page_private(page), };
 	int type = swp_type(entry);
 	struct swap_info_struct *sis = swap_info[type];
@@ -173,10 +173,11 @@ int __frontswap_get_page(struct page *page)
 	BUG_ON(!PageLocked(page));
 	BUG_ON(sis == NULL);
 	if (frontswap_test(sis, offset))
-		ret = (*frontswap_ops.get_page)(type, offset, page);
-	if (ret == 0)
-		inc_frontswap_gets();
-	return ret;
+		if ((*frontswap_ops.get_page)(type, offset, page)) {
+			inc_frontswap_gets();
+			return true;
+		}
+	return false;
 }
 EXPORT_SYMBOL(__frontswap_get_page);
 

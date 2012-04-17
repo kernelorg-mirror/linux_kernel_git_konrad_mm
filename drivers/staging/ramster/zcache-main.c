@@ -3002,13 +3002,13 @@ static inline struct tmem_oid oswiz(unsigned type, u32 ind)
 	return oid;
 }
 
-static int zcache_frontswap_put_page(unsigned type, pgoff_t offset,
+static bool zcache_frontswap_put_page(unsigned type, pgoff_t offset,
 				   struct page *page)
 {
 	u64 ind64 = (u64)offset;
 	u32 ind = (u32)offset;
 	struct tmem_oid oid = oswiz(type, ind);
-	int ret = -1;
+	bool ret = false;
 	unsigned long flags;
 	char *kva;
 
@@ -3016,22 +3016,22 @@ static int zcache_frontswap_put_page(unsigned type, pgoff_t offset,
 	if (likely(ind64 == ind)) {
 		local_irq_save(flags);
 		kva = page_address(page);
-		ret = zcache_put(LOCAL_CLIENT, zcache_frontswap_poolid,
-				&oid, iswiz(ind), kva, PAGE_SIZE, 0, 0);
+		ret = zcache_put(LOCAL_CLIENT, zcache_frontswap_poolid, &oid,
+			iswiz(ind), kva, PAGE_SIZE, 0, 0) == 0 ? true : false;
 		local_irq_restore(flags);
 	}
 	return ret;
 }
 
-/* returns 0 if the page was successfully gotten from frontswap, -1 if
+/* returns true if the page was successfully gotten from frontswap, false if
  * was not present (should never happen!) */
-static int zcache_frontswap_get_page(unsigned type, pgoff_t offset,
+static bool zcache_frontswap_get_page(unsigned type, pgoff_t offset,
 				   struct page *page)
 {
 	u64 ind64 = (u64)offset;
 	u32 ind = (u32)offset;
 	struct tmem_oid oid = oswiz(type, ind);
-	int ret = -1;
+	bool ret = false;
 
 	preempt_disable(); /* FIXME, remove this? */
 	BUG_ON(!PageLocked(page));
@@ -3039,8 +3039,8 @@ static int zcache_frontswap_get_page(unsigned type, pgoff_t offset,
 		char *kva = page_address(page);
 		size_t size = PAGE_SIZE;
 
-		ret = zcache_get(LOCAL_CLIENT, zcache_frontswap_poolid,
-					&oid, iswiz(ind), kva, &size, 0, -1);
+		ret = zcache_get(LOCAL_CLIENT, zcache_frontswap_poolid, &oid, iswiz(ind),
+			kva, &size, 0, -1) == 0 ? true : false;
 	}
 	preempt_enable(); /* FIXME, remove this? */
 	return ret;
