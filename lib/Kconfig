@@ -179,6 +179,7 @@ config LZO_DECOMPRESS
 
 source "lib/xz/Kconfig"
 
+source "lib/zsmalloc/Kconfig"
 #
 # These all provide a common interface (hence the apparent duplication with
 # ZLIB_INFLATE; DECOMPRESS_GZIP is just a wrapper.)

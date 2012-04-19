@@ -28,7 +28,7 @@
 #include <linux/cpu.h>
 #include <linux/vmalloc.h>
 
-#include "zsmalloc.h"
+#include <linux/zsmalloc.h>
 #include "zsmalloc_int.h"
 
 /*
