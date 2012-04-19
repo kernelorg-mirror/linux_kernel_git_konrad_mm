@@ -99,7 +99,7 @@ int swap_writepage(struct page *page, struct writeback_control *wbc)
 		unlock_page(page);
 		goto out;
 	}
-	if (frontswap_put_page(page)) {
+	if (frontswap_store(page)) {
 		set_page_writeback(page);
 		unlock_page(page);
 		end_page_writeback(page);
@@ -129,7 +129,7 @@ int swap_readpage(struct page *page)
 
 	VM_BUG_ON(!PageLocked(page));
 	VM_BUG_ON(PageUptodate(page));
-	if (frontswap_get_page(page)) {
+	if (frontswap_load(page)) {
 		SetPageUptodate(page);
 		unlock_page(page);
 		goto out;
