@@ -396,3 +396,5 @@ config FRONTSWAP
 	  and swap data is stored as normal on the matching swap device.
 
 	  If unsure, say Y to enable frontswap.
+
+source "mm/zcache/Kconfig"
