@@ -3002,7 +3002,7 @@ static inline struct tmem_oid oswiz(unsigned type, u32 ind)
 	return oid;
 }
 
-static bool zcache_frontswap_put_page(unsigned type, pgoff_t offset,
+static bool zcache_frontswap_store(unsigned type, pgoff_t offset,
 				   struct page *page)
 {
 	u64 ind64 = (u64)offset;
@@ -3025,7 +3025,7 @@ static bool zcache_frontswap_put_page(unsigned type, pgoff_t offset,
 
 /* returns true if the page was successfully gotten from frontswap, false if
  * was not present (should never happen!) */
-static bool zcache_frontswap_get_page(unsigned type, pgoff_t offset,
+static bool zcache_frontswap_load(unsigned type, pgoff_t offset,
 				   struct page *page)
 {
 	u64 ind64 = (u64)offset;
@@ -3080,8 +3080,8 @@ static void zcache_frontswap_init(unsigned ignored)
 }
 
 static struct frontswap_ops zcache_frontswap_ops = {
-	.put_page = zcache_frontswap_put_page,
-	.get_page = zcache_frontswap_get_page,
+	.store = zcache_frontswap_store,
+	.load = zcache_frontswap_load,
 	.invalidate_page = zcache_frontswap_flush_page,
 	.invalidate_area = zcache_frontswap_flush_area,
 	.init = zcache_frontswap_init
