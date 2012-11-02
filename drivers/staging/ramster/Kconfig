@@ -1,5 +1,5 @@
 config ZCACHE2
-	bool "Dynamic compression of swap pages and clean pagecache pages"
+	tristate "Dynamic compression of swap pages and clean pagecache pages"
 	depends on CRYPTO=y && SWAP=y && CLEANCACHE && FRONTSWAP && !ZCACHE 
 	select CRYPTO_LZO
 	default n
@@ -16,8 +16,8 @@ config ZCACHE2
 	  version of ramster.
 
 config RAMSTER
-	bool "Cross-machine RAM capacity sharing, aka peer-to-peer tmem"
-	depends on CONFIGFS_FS=y && SYSFS=y && !HIGHMEM && ZCACHE2=y
+	tristate "Cross-machine RAM capacity sharing, aka peer-to-peer tmem"
+	depends on CONFIGFS_FS && SYSFS && !HIGHMEM && ZCACHE2
 	depends on NET
 	# must ensure struct page is 8-byte aligned
 	select HAVE_ALIGNED_STRUCT_PAGE if !64_BIT
