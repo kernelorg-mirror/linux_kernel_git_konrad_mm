@@ -174,7 +174,6 @@ static inline void inc_zcache_evicted_eph_pageframes(void) { zcache_evicted_eph_
 static inline void inc_zcache_eph_nonactive_puts_ignored(void) { zcache_eph_nonactive_puts_ignored ++; };
 static inline void inc_zcache_pers_nonactive_puts_ignored(void) { zcache_pers_nonactive_puts_ignored ++; };
 
-int zcache_debugfs_init(void);
 #else
 static inline void inc_zcache_obj_count(void) { };
 static inline void dec_zcache_obj_count(void) { };
@@ -198,10 +197,6 @@ static inline unsigned long curr_pageframes_count(void)
 {
 	return 0;
 };
-static inline int zcache_debugfs_init(void)
-{
-	return 0;
-};
 static inline void inc_zcache_flush_total(void) { };
 static inline void inc_zcache_flush_found(void) { };
 static inline void inc_zcache_flobj_total(void) { };
@@ -222,4 +217,13 @@ static inline void inc_zcache_evicted_eph_pageframes(void) { };
 
 static inline void inc_zcache_eph_nonactive_puts_ignored(void) { };
 static inline void inc_zcache_pers_nonactive_puts_ignored(void) { };
+#endif
+
+#ifdef CONFIG_DEBUG_FS
+int zcache_debugfs_init(void);
+#else
+static inline int zcache_debugfs_init(void)
+{
+	return 0;
+};
 #endif
