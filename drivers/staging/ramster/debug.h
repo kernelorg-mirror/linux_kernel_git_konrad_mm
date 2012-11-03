@@ -1,4 +1,4 @@
-#ifdef CONFIG_ZCACHE_DEBUG
+#ifdef CONFIG_ZCACHE2_DEBUG
 
 /* we try to keep these statistics SMP-consistent */
 static ssize_t zcache_obj_count;

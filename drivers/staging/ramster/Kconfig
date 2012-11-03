@@ -15,6 +15,14 @@ config ZCACHE2
 	  again in the future.  Until then, zcache2 is a single-node
 	  version of ramster.
 
+config ZCACHE2_DEBUG
+	bool "Enable debug statistics"
+	depends on DEBUG_FS && ZCACHE2
+	default n
+	help
+	  This is used to provide an debugfs directory with counters of
+	  how zcache2 is doing. You probably want to set this to 'N'.
+
 config RAMSTER
 	tristate "Cross-machine RAM capacity sharing, aka peer-to-peer tmem"
 	depends on CONFIGFS_FS && SYSFS && !HIGHMEM && ZCACHE2
