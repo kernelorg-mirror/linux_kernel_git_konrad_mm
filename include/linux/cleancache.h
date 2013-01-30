@@ -42,9 +42,15 @@ extern void __cleancache_put_page(struct page *);
 extern void __cleancache_invalidate_page(struct address_space *, struct page *);
 extern void __cleancache_invalidate_inode(struct address_space *);
 extern void __cleancache_invalidate_fs(struct super_block *);
-extern int cleancache_enabled;
 
 #ifdef CONFIG_CLEANCACHE
+#include <linux/jump_label.h>
+extern struct static_key cleancache_key;
+
+static inline bool cleancache_enabled(void)
+{
+	return static_key_false(&cleancache_key);
+}
 static inline bool cleancache_fs_enabled(struct page *page)
 {
 	return page->mapping->host->i_sb->cleancache_poolid >= 0;
@@ -86,14 +92,14 @@ static inline int cleancache_get_page(struct page *page)
 {
 	int ret = -1;
 
-	if (cleancache_enabled && cleancache_fs_enabled(page))
+	if (cleancache_enabled() && cleancache_fs_enabled(page))
 		ret = __cleancache_get_page(page);
 	return ret;
 }
 
 static inline void cleancache_put_page(struct page *page)
 {
-	if (cleancache_enabled && cleancache_fs_enabled(page))
+	if (cleancache_enabled() && cleancache_fs_enabled(page))
 		__cleancache_put_page(page);
 }
 
@@ -101,13 +107,13 @@ static inline void cleancache_invalidate_page(struct address_space *mapping,
 					struct page *page)
 {
 	/* careful... page->mapping is NULL sometimes when this is called */
-	if (cleancache_enabled && cleancache_fs_enabled_mapping(mapping))
+	if (cleancache_enabled() && cleancache_fs_enabled_mapping(mapping))
 		__cleancache_invalidate_page(mapping, page);
 }
 
 static inline void cleancache_invalidate_inode(struct address_space *mapping)
 {
-	if (cleancache_enabled && cleancache_fs_enabled_mapping(mapping))
+	if (cleancache_enabled() && cleancache_fs_enabled_mapping(mapping))
 		__cleancache_invalidate_inode(mapping);
 }
 
