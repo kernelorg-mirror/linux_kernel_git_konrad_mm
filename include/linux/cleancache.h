@@ -74,14 +74,12 @@ static inline bool cleancache_fs_enabled_mapping(struct address_space *mapping)
 
 static inline void cleancache_init_fs(struct super_block *sb)
 {
-	if (cleancache_enabled)
-		__cleancache_init_fs(sb);
+	__cleancache_init_fs(sb);
 }
 
 static inline void cleancache_init_shared_fs(char *uuid, struct super_block *sb)
 {
-	if (cleancache_enabled)
-		__cleancache_init_shared_fs(uuid, sb);
+	__cleancache_init_shared_fs(uuid, sb);
 }
 
 static inline int cleancache_get_page(struct page *page)
@@ -115,8 +113,7 @@ static inline void cleancache_invalidate_inode(struct address_space *mapping)
 
 static inline void cleancache_invalidate_fs(struct super_block *sb)
 {
-	if (cleancache_enabled)
-		__cleancache_invalidate_fs(sb);
+	__cleancache_invalidate_fs(sb);
 }
 
 #endif /* _LINUX_CLEANCACHE_H */
