@@ -113,7 +113,7 @@ static inline int frontswap_load(struct page *page)
 
 static inline void frontswap_invalidate_page(unsigned type, pgoff_t offset)
 {
-	if (frontswap_enabled)
+	if (static_key_false(&frontswap_key))
 		__frontswap_invalidate_page(type, offset);
 }
 
