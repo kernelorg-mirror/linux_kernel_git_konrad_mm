@@ -12,8 +12,6 @@ struct frontswap_ops {
 	void (*invalidate_page)(unsigned, pgoff_t);
 	void (*invalidate_area)(unsigned);
 };
-
-extern bool frontswap_enabled;
 extern struct frontswap_ops *
 	frontswap_register_ops(struct frontswap_ops *ops);
 extern void frontswap_shrink(unsigned long);
@@ -29,25 +27,30 @@ extern void __frontswap_invalidate_page(unsigned, pgoff_t);
 extern void __frontswap_invalidate_area(unsigned);
 
 #ifdef CONFIG_FRONTSWAP
+#include <linux/jump_label.h>
+
+extern struct static_key frontswap_key;
+
+#define frontswap_enabled (1)
 
 static inline bool frontswap_test(struct swap_info_struct *sis, pgoff_t offset)
 {
 	bool ret = false;
 
-	if (frontswap_enabled && sis->frontswap_map)
+	if (static_key_false(&frontswap_key) && sis->frontswap_map)
 		ret = test_bit(offset, sis->frontswap_map);
 	return ret;
 }
 
 static inline void frontswap_set(struct swap_info_struct *sis, pgoff_t offset)
 {
-	if (frontswap_enabled && sis->frontswap_map)
+	if (static_key_false(&frontswap_key) && sis->frontswap_map)
 		set_bit(offset, sis->frontswap_map);
 }
 
 static inline void frontswap_clear(struct swap_info_struct *sis, pgoff_t offset)
 {
-	if (frontswap_enabled && sis->frontswap_map)
+	if (static_key_false(&frontswap_key) && sis->frontswap_map)
 		clear_bit(offset, sis->frontswap_map);
 }
 
@@ -94,7 +97,7 @@ static inline int frontswap_store(struct page *page)
 {
 	int ret = -1;
 
-	if (frontswap_enabled)
+	if (static_key_false(&frontswap_key))
 		ret = __frontswap_store(page);
 	return ret;
 }
@@ -103,7 +106,7 @@ static inline int frontswap_load(struct page *page)
 {
 	int ret = -1;
 
-	if (frontswap_enabled)
+	if (static_key_false(&frontswap_key))
 		ret = __frontswap_load(page);
 	return ret;
 }
