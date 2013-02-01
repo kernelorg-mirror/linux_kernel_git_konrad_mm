@@ -321,6 +321,16 @@ static inline void inc_zbud_eph_unbuddied_count(void) { zbud_eph_unbuddied_count
 static inline void inc_zbud_pers_unbuddied_count(void) { zbud_pers_unbuddied_count++; };
 static inline void inc_zbud_eph_zombie_count(void) { zbud_eph_zombie_count++; };
 static inline void inc_zbud_pers_zombie_count(void) { zbud_pers_zombie_count++; };
+static inline void dec_zbud_eph_pageframes(void) { zbud_eph_pageframes--; };
+static inline void dec_zbud_pers_pageframes(void) { zbud_pers_pageframes--; };
+static inline void dec_zbud_eph_zpages(void) { zbud_eph_zpages--; };
+static inline void dec_zbud_pers_zpages(void) { zbud_pers_zpages--; };
+static inline void dec_zbud_eph_zbytes(ssize_t bytes) { zbud_eph_zbytes -= bytes; };
+static inline void dec_zbud_pers_zbytes(ssize_t bytes) { zbud_pers_zbytes -= bytes; };
+static inline void dec_zbud_eph_buddied_count(void) { zbud_eph_buddied_count--; };
+static inline void dec_zbud_pers_buddied_count(void) { zbud_pers_buddied_count--; };
+static inline void dec_zbud_eph_unbuddied_count(void) { zbud_eph_unbuddied_count--; };
+static inline void dec_zbud_pers_unbuddied_count(void) { zbud_pers_unbuddied_count--; };
 static atomic_t zbud_eph_zombie_atomic;
 static atomic_t zbud_pers_zombie_atomic;
 
@@ -420,9 +430,9 @@ static inline struct page *zbud_unuse_zbudpage(struct zbudpage *zbudpage,
 	BUG_ON(zbudpage_is_dying(zbudpage));
 	BUG_ON(zbudpage_is_zombie(zbudpage));
 	if (eph)
-		zbud_eph_pageframes--;
+		dec_zbud_eph_pageframes();
 	else
-		zbud_pers_pageframes--;
+		dec_zbud_pers_pageframes();
 	zbudpage_spin_unlock(zbudpage);
 	reset_page_mapcount(page);
 	init_page_count(page);
@@ -445,11 +455,11 @@ static inline void zbud_unuse_zbud(struct zbudpage *zbudpage,
 		zbudpage->zbud1_size = 0;
 	}
 	if (eph) {
-		zbud_eph_zbytes -= size;
-		zbud_eph_zpages--;
+		dec_zbud_eph_zbytes(size);
+		dec_zbud_eph_zpages();
 	} else {
-		zbud_pers_zbytes -= size;
-		zbud_pers_zpages--;
+		dec_zbud_pers_zbytes(size);
+		dec_zbud_pers_zpages();
 	}
 }
 
@@ -610,9 +620,9 @@ struct page *zbud_free_and_delist(struct zbudref *zref, bool eph,
 		list_del_init(&zbudpage->lru);
 		spin_unlock(lists_lock);
 		if (eph)
-			zbud_eph_unbuddied_count--;
+			dec_zbud_eph_unbuddied_count();
 		else
-			zbud_pers_unbuddied_count--;
+			dec_zbud_pers_unbuddied_count();
 		page = zbud_unuse_zbudpage(zbudpage, eph);
 	} else { /* was buddied: move remaining buddy to unbuddied list */
 		chunks = zbud_size_to_chunks(other_bud_size) ;
@@ -622,11 +632,11 @@ struct page *zbud_free_and_delist(struct zbudref *zref, bool eph,
 			unbud[chunks].count++;
 		}
 		if (eph) {
-			zbud_eph_buddied_count--;
+			dec_zbud_eph_buddied_count();
 			inc_zbud_eph_unbuddied_count();
 		} else {
 			inc_zbud_pers_unbuddied_count();
-			zbud_pers_buddied_count--;
+			dec_zbud_pers_buddied_count();
 		}
 		/* don't mess with lru, no need to move it */
 		zbudpage_spin_unlock(zbudpage);
@@ -683,7 +693,7 @@ found_unbuddied:
 	if (eph) {
 		list_add_tail(&zbudpage->budlist, &zbud_eph_buddied_list);
 		unbud[found_good_buddy].count--;
-		zbud_eph_unbuddied_count--;
+		dec_zbud_eph_unbuddied_count();
 		inc_zbud_eph_buddied_count();
 		/* "promote" raw zbudpage to most-recently-used */
 		list_del_init(&zbudpage->lru);
@@ -691,7 +701,7 @@ found_unbuddied:
 	} else {
 		list_add_tail(&zbudpage->budlist, &zbud_pers_buddied_list);
 		unbud[found_good_buddy].count--;
-		zbud_pers_unbuddied_count--;
+		dec_zbud_pers_unbuddied_count();
 		inc_zbud_pers_buddied_count();
 		/* "promote" raw zbudpage to most-recently-used */
 		list_del_init(&zbudpage->lru);
@@ -973,9 +983,9 @@ evict_page:
 	spin_unlock(&zbud_eph_lists_lock);
 	inc_zbud_eph_evicted_pageframes();
 	if (*zpages == 1)
-		zbud_eph_unbuddied_count--;
+		dec_zbud_eph_unbuddied_count();
 	else
-		zbud_eph_buddied_count--;
+		dec_zbud_eph_buddied_count();
 	zbud_evict_tmem(zbudpage);
 	zbudpage_spin_lock(zbudpage);
 	zbudpage_clear_dying(zbudpage);
