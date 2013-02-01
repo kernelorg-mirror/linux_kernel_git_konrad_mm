@@ -116,14 +116,12 @@ static inline void frontswap_invalidate_page(unsigned type, pgoff_t offset)
 
 static inline void frontswap_invalidate_area(unsigned type)
 {
-	if (frontswap_enabled)
-		__frontswap_invalidate_area(type);
+	__frontswap_invalidate_area(type);
 }
 
 static inline void frontswap_init(unsigned type)
 {
-	if (frontswap_enabled)
-		__frontswap_init(type);
+	__frontswap_init(type);
 }
 
 #endif /* _LINUX_FRONTSWAP_H */
