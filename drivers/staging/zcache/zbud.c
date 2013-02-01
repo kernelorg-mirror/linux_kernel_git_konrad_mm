@@ -1077,7 +1077,7 @@ out:
 	return ret;
 }
 
-void __init zbud_init(void)
+void zbud_init(void)
 {
 	int i;
 
