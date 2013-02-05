@@ -169,7 +169,8 @@ EXPORT_SYMBOL(frontswap_tmem_exclusive_gets);
 /*
  * Called when a swap device is swapon'd.
  *
- * Can be called without any backend driver is registered.
+ * Can be called before (or after) the backend driver has called
+ * frontswap_register_ops.
  */
 void __frontswap_init(unsigned type, unsigned long *map)
 {
@@ -295,7 +296,8 @@ EXPORT_SYMBOL(__frontswap_invalidate_page);
  * Invalidate all data from frontswap associated with all offsets for the
  * specified swaptype.
  *
- * Can be called without any backend driver registered.
+ * Can be called before (or after) the backend driver has called
+ * frontswap_register_ops.
  */
 void __frontswap_invalidate_area(unsigned type)
 {
